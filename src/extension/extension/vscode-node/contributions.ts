@@ -5,7 +5,8 @@
 
 import { AuthenticationContrib } from '../../authentication/vscode-node/authentication.contribution';
 import { BYOKContrib } from '../../byok/vscode-node/byokContribution';
-import { ChatQuotaContribution } from '../../chat/vscode-node/chatQuota.contribution';
+// FlowLeap Patent IDE: Removed ChatQuotaContribution (GitHub Copilot quota not needed)
+// import { ChatQuotaContribution } from '../../chat/vscode-node/chatQuota.contribution';
 import { ChatSessionsContrib } from '../../chatSessions/vscode-node/chatSessions';
 import * as chatBlockLanguageContribution from '../../codeBlocks/vscode-node/chatBlockLanguageFeatures.contribution';
 import { IExtensionContributionFactory, asContributionFactory } from '../../common/contributions';
@@ -19,7 +20,8 @@ import { ConversationFeature } from '../../conversation/vscode-node/conversation
 import { FeedbackCommandContribution } from '../../conversation/vscode-node/feedbackContribution';
 import { LanguageModelAccess } from '../../conversation/vscode-node/languageModelAccess';
 import { LogWorkspaceStateContribution } from '../../conversation/vscode-node/logWorkspaceState';
-import { RemoteAgentContribution } from '../../conversation/vscode-node/remoteAgents';
+// FlowLeap Patent IDE: Removed RemoteAgentContribution (GitHub-specific remote agents)
+// import { RemoteAgentContribution } from '../../conversation/vscode-node/remoteAgents';
 import { DiagnosticsContextContribution } from '../../diagnosticsContext/vscode/diagnosticsContextProvider';
 import { LanguageModelProxyContrib } from '../../externalAgents/vscode-node/lmProxyContrib';
 import { WalkthroughCommandContribution } from '../../getting-started/vscode-node/commands';
@@ -41,13 +43,16 @@ import { RelatedFilesProviderContribution } from '../../relatedFiles/vscode-node
 import { ChatReplayContribution } from '../../replay/vscode-node/chatReplayContrib';
 import { SearchPanelCommands } from '../../search/vscode-node/commands';
 import { SettingsSchemaFeature } from '../../settingsSchema/vscode-node/settingsSchemaFeature';
-import { SurveyCommandContribution } from '../../survey/vscode-node/surveyCommands';
+// FlowLeap Patent IDE: Removed SurveyCommandContribution (not needed for patent work)
+// import { SurveyCommandContribution } from '../../survey/vscode-node/surveyCommands';
 import { SetupTestsContribution } from '../../testing/vscode/setupTestContributions';
 import { ToolsContribution } from '../../tools/vscode-node/tools';
 import { InlineCompletionContribution } from '../../typescriptContext/vscode-node/languageContextService';
 import * as workspaceChunkSearchContribution from '../../workspaceChunkSearch/node/workspaceChunkSearch.contribution';
 import * as workspaceIndexingContribution from '../../workspaceChunkSearch/vscode-node/workspaceChunkSearch.contribution';
 import { WorkspaceRecorderFeature } from '../../workspaceRecorder/vscode-node/workspaceRecorderFeature';
+import { FlowLeapContribution } from '../../byok/vscode-node/flowleapContribution';
+import { PatentContribution } from '../../byok/vscode-node/patentContribution';
 import vscodeContributions from '../vscode/contributions';
 
 // ###################################################################################################
@@ -60,6 +65,8 @@ import vscodeContributions from '../vscode/contributions';
 
 export const vscodeNodeContributions: IExtensionContributionFactory[] = [
 	...vscodeContributions,
+	asContributionFactory(PatentContribution), // Register Patent AI early, no auth required
+	// asContributionFactory(FlowLeapContribution), // DISABLED: VS Code doesn't allow custom vendor names
 	asContributionFactory(ConversationFeature),
 	workspaceChunkSearchContribution,
 	asContributionFactory(AuthenticationContrib),
@@ -74,11 +81,13 @@ export const vscodeNodeContributions: IExtensionContributionFactory[] = [
 	asContributionFactory(InlineEditProviderFeature),
 	asContributionFactory(SettingsSchemaFeature),
 	asContributionFactory(WorkspaceRecorderFeature),
-	asContributionFactory(SurveyCommandContribution),
+	// FlowLeap Patent IDE: Removed SurveyCommandContribution (not needed for patent work)
+	// asContributionFactory(SurveyCommandContribution),
 	asContributionFactory(FeedbackCommandContribution),
 	asContributionFactory(InlineCompletionContribution),
 	asContributionFactory(SearchPanelCommands),
-	asContributionFactory(ChatQuotaContribution),
+	// FlowLeap Patent IDE: Removed ChatQuotaContribution (GitHub Copilot quota not needed)
+	// asContributionFactory(ChatQuotaContribution),
 	asContributionFactory(NotebookFollowCommands),
 	asContributionFactory(PromptFileContextContribution),
 	asContributionFactory(DiagnosticsContextContribution),
@@ -101,7 +110,8 @@ export const vscodeNodeChatContributions: IExtensionContributionFactory[] = [
 	asContributionFactory(RequestLogTree),
 	asContributionFactory(OnboardTerminalTestsContribution),
 	asContributionFactory(ToolsContribution),
-	asContributionFactory(RemoteAgentContribution),
+	// FlowLeap Patent IDE: Removed RemoteAgentContribution (GitHub-specific remote agents)
+	// asContributionFactory(RemoteAgentContribution),
 	asContributionFactory(AiMappedEditsContrib),
 	asContributionFactory(RenameSuggestionsContrib),
 	asContributionFactory(LogWorkspaceStateContribution),

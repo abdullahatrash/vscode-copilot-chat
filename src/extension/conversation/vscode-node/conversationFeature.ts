@@ -81,6 +81,7 @@ export class ConversationFeature implements IExtensionContribution {
 		@INewWorkspacePreviewContentManager private readonly newWorkspacePreviewContentManager: INewWorkspacePreviewContentManager,
 		@ISettingsEditorSearchService private readonly settingsEditorSearchService: ISettingsEditorSearchService,
 	) {
+		console.log('[ConversationFeature] Constructor START');
 		this._enabled = false;
 		this._activated = false;
 
@@ -89,22 +90,64 @@ export class ConversationFeature implements IExtensionContribution {
 
 		const activationBlockerDeferred = new DeferredPromise<void>();
 		this.activationBlocker = activationBlockerDeferred.p;
-		if (authenticationService.copilotToken) {
-			this.logService.debug(`ConversationFeature: Copilot token already available`);
-			this.activated = true;
-			activationBlockerDeferred.complete();
-		}
 
+		// Check if token is already available (e.g., in Patent AI mode)
+		// If so, activate immediately to ensure agents are registered before VSCode checks
+		console.log('[ConversationFeature] Checking for existing token:', !!authenticationService.copilotToken);
+		if (authenticationService.copilotToken) {
+			console.log('[ConversationFeature] Token found!');
+			this.logService.debug(`ConversationFeature: Copilot token already available`);
+			const chatEnabled = authenticationService.copilotToken.isChatEnabled();
+			console.log('[ConversationFeature] Chat enabled:', chatEnabled);
+			this.logService.debug(`ConversationFeature: Chat enabled: ${chatEnabled}`);
+			if (chatEnabled) {
+				this.enabled = true;
+				// Activate immediately (synchronously) to register agents before VSCode checks
+				console.log('[ConversationFeature] Setting activated = true');
+				this.logService.debug(`ConversationFeature: Activating immediately (token available)`);
+				this.activated = true;
+				console.log('[ConversationFeature] Agents should now be registered');
+				// Complete blocker immediately - agents are registered synchronously
+				// when activated = true is set above, so we don't need to wait
+				this.logService.debug(`ConversationFeature: Completing activation blocker immediately`);
+				activationBlockerDeferred.complete();
+				console.log('[ConversationFeature] Activation blocker completed');
+			} else {
+				// Complete blocker even if chat not enabled (to avoid blocking activation)
+				activationBlockerDeferred.complete();
+			}
+		} else {
+			console.log('[ConversationFeature] No token available at construction time');
+		}
+		console.log('[ConversationFeature] Constructor END');
+
+		// Always register listener for authentication changes
 		this._disposables.add(authenticationService.onDidAuthenticationChange(async () => {
 			const hasSession = !!authenticationService.copilotToken;
 			this.logService.debug(`ConversationFeature: onDidAuthenticationChange has token: ${hasSession}`);
 			if (hasSession) {
-				this.activated = true;
+				const chatEnabled = authenticationService.copilotToken?.isChatEnabled();
+				this.logService.debug(`ConversationFeature: Setting enabled=${chatEnabled}`);
+				if (chatEnabled && !this._activated) {
+					this.enabled = true;
+					this.logService.debug(`ConversationFeature: Activating from auth change event`);
+					this.activated = true;
+					// Complete blocker immediately - agents are registered synchronously
+					if (!activationBlockerDeferred.isSettled) {
+						this.logService.debug(`ConversationFeature: Completing activation blocker from auth change`);
+						activationBlockerDeferred.complete();
+					}
+				} else {
+					this.enabled = chatEnabled ?? false;
+				}
 			} else {
+				this.enabled = false;
 				this.activated = false;
+				// Complete blocker if not already completed
+				if (!activationBlockerDeferred.isSettled) {
+					activationBlockerDeferred.complete();
+				}
 			}
-
-			activationBlockerDeferred.complete();
 		}));
 	}
 
@@ -141,7 +184,9 @@ export class ConversationFeature implements IExtensionContribution {
 			this._activatedDisposables.add(this.registerCommands(options));
 			this._activatedDisposables.add(this.registerRelatedInformationProviders());
 			this._activatedDisposables.add(this.registerParticipants(options));
+			console.log('[ConversationFeature] Creating vscodeNodeChatContributions (includes BYOKContrib)');
 			this._activatedDisposables.add(this.instantiationService.createInstance(ContributionCollection, vscodeNodeChatContributions));
+			console.log('[ConversationFeature] vscodeNodeChatContributions created successfully');
 		}
 	}
 
@@ -154,7 +199,12 @@ export class ConversationFeature implements IExtensionContribution {
 	public [Symbol.dispose]() { this.dispose(); }
 
 	private registerParticipants(options: IConversationOptions): IDisposable {
-		return this.chatAgentService.register(options);
+		console.log('[ConversationFeature] registerParticipants() called');
+		this.logService.debug(`ConversationFeature: Registering chat participants`);
+		const disposable = this.chatAgentService.register(options);
+		console.log('[ConversationFeature] chatAgentService.register() returned');
+		this.logService.debug(`ConversationFeature: Chat participants registered`);
+		return disposable;
 	}
 
 	private registerSearchProvider(): IDisposable | undefined {

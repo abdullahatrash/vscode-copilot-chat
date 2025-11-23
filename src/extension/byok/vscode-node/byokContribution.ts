@@ -24,6 +24,7 @@ import { OllamaLMProvider } from './ollamaProvider';
 import { OAIBYOKLMProvider } from './openAIProvider';
 import { OpenRouterLMProvider } from './openRouterProvider';
 import { XAIBYOKLMProvider } from './xAIProvider';
+import { FlowLeapProvider } from './flowleapProvider';
 
 export class BYOKContrib extends Disposable implements IExtensionContribution {
 	public readonly id: string = 'byok-contribution';
@@ -41,6 +42,14 @@ export class BYOKContrib extends Disposable implements IExtensionContribution {
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 	) {
 		super();
+		console.log('[BYOKContrib] Constructor called - starting BYOK provider registration');
+
+		// Register stub command for Patent AI mode (VS Code core expects this command)
+		this._register(commands.registerCommand('workbench.action.chat.triggerSetup', async () => {
+			this._logService.info('[Patent AI] Chat setup command triggered - no action needed in Patent AI mode');
+			// In Patent AI mode, no GitHub setup needed. FlowLeap provider is already active.
+		}));
+
 		this._register(commands.registerCommand('github.copilot.chat.manageBYOK', async (vendor: string) => {
 			const provider = this._providers.get(vendor);
 
@@ -74,11 +83,37 @@ export class BYOKContrib extends Disposable implements IExtensionContribution {
 		}));
 
 		this._byokStorageService = new BYOKStorageService(extensionContext);
+
+		// Register FlowLeap provider immediately (no auth required)
+		this._registerFlowLeapProvider(this._instantiationService);
+
 		this._authChange(authService, this._instantiationService);
 
 		this._register(authService.onDidAuthenticationChange(() => {
 			this._authChange(authService, this._instantiationService);
 		}));
+	}
+
+	private _registerFlowLeapProvider(instantiationService: IInstantiationService) {
+		// Register FlowLeap provider without requiring Copilot token
+		console.log('[BYOKContrib] Registering FlowLeap provider');
+		this._logService.info('FlowLeap: Registering FlowLeap provider');
+		const flowleapProvider = instantiationService.createInstance(FlowLeapProvider, this._byokStorageService);
+		this._providers.set(FlowLeapProvider.providerName.toLowerCase(), flowleapProvider);
+		this._store.add(lm.registerLanguageModelChatProvider(FlowLeapProvider.providerName.toLowerCase(), flowleapProvider));
+		console.log('[BYOKContrib] FlowLeap provider registered successfully with vendor:', FlowLeapProvider.providerName.toLowerCase());
+		this._logService.info('FlowLeap: Provider registered successfully');
+
+		// Trigger immediate model resolution so models appear in model picker
+		// VS Code's language model service only resolves models on-demand, but we want FlowLeap
+		// models to be available immediately when the chat panel opens
+		console.log('[BYOKContrib] Triggering FlowLeap model resolution');
+		lm.selectChatModels({ vendor: FlowLeapProvider.providerName.toLowerCase() }).then(models => {
+			console.log('[BYOKContrib] FlowLeap models resolved:', models.length, 'models found');
+			models.forEach(m => console.log('[BYOKContrib] Available model:', m.name, '(' + m.id + ')'));
+		}).catch(err => {
+			console.error('[BYOKContrib] Failed to resolve FlowLeap models:', err);
+		});
 	}
 
 	private async _authChange(authService: IAuthenticationService, instantiationService: IInstantiationService) {

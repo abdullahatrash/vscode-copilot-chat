@@ -147,5 +147,18 @@
 		"eslint": "warning"
 	},
 	"githubPullRequests.codingAgent.enabled": true,
-	"githubPullRequests.codingAgent.uiIntegration": true
+	"githubPullRequests.codingAgent.uiIntegration": true,
+
+	// FlowLeap Configuration
+	"flowleap.apiUrl": "http://localhost:8000/v1/chat/completions",
+	"flowleap.apiKey": "test-api-key",
+	"flowleap.enabled": true,
+
+	// Disable features that require GitHub auth
+	"github.copilot.chat.advanced.claudeCode.enabled": false,
+	"github.copilot.chat.advanced.copilotCLI.enabled": false,
+
+	// Enable debug logging
+	"github.copilot.advanced.debug.enable": true,
+	"github.copilot.advanced.debug.enableVerbose": true
 }

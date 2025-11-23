@@ -160,7 +160,12 @@ export function byokKnownModelsToAPIInfo(providerName: string, knownModels: BYOK
 	if (!knownModels) {
 		return [];
 	}
-	return Object.entries(knownModels).map(([id, capabilities]) => {
+	const modelEntries = Object.entries(knownModels);
+	return modelEntries.map(([id, capabilities], index) => {
+		// In Patent AI mode, make FlowLeap the default model
+		const isFlowLeap = providerName.toLowerCase() === 'flowleap';
+		const isFirstModel = index === 0;
+
 		return {
 			id,
 			name: capabilities.name,
@@ -170,6 +175,8 @@ export function byokKnownModelsToAPIInfo(providerName: string, knownModels: BYOK
 			detail: providerName,
 			family: providerName,
 			tooltip: `${capabilities.name} is contributed via the ${providerName} provider.`,
+			isUserSelectable: true,
+			isDefault: isFlowLeap && isFirstModel, // Make FlowLeap the default model
 			capabilities: {
 				toolCalling: capabilities.toolCalling,
 				imageInput: capabilities.vision

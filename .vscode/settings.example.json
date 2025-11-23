@@ -1,0 +1,6 @@
+{
+  "flowleap.apiUrl": "http://localhost:8000/v1/chat/completions",
+  "flowleap.apiKey": "",
+  "flowleap.defaultModel": "flowleap-patent-gpt",
+  "flowleap.enabled": true
+}

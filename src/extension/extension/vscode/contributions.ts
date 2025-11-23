@@ -6,8 +6,9 @@
 import { NesActivationTelemetryContribution } from '../../../platform/inlineEdits/common/nesActivationStatusTelemetry.contribution';
 import { asContributionFactory, IExtensionContributionFactory } from '../../common/contributions';
 import * as contextContribution from '../../context/vscode/context.contribution';
-import { LifecycleTelemetryContrib } from '../../telemetry/common/lifecycleTelemetryContrib';
-import { GithubTelemetryForwardingContrib } from '../../telemetry/vscode/githubTelemetryForwardingContrib';
+// FlowLeap Patent IDE: Removed telemetry contributions
+// import { LifecycleTelemetryContrib } from '../../telemetry/common/lifecycleTelemetryContrib';
+// import { GithubTelemetryForwardingContrib } from '../../telemetry/vscode/githubTelemetryForwardingContrib';
 
 // ###############################################################################
 // ###                                                                         ###
@@ -18,9 +19,11 @@ import { GithubTelemetryForwardingContrib } from '../../telemetry/vscode/githubT
 // ###############################################################################
 
 const vscodeContributions: IExtensionContributionFactory[] = [
-	asContributionFactory(LifecycleTelemetryContrib),
+	// FlowLeap Patent IDE: Removed telemetry contributions
+	// asContributionFactory(LifecycleTelemetryContrib),
 	asContributionFactory(NesActivationTelemetryContribution),
-	asContributionFactory(GithubTelemetryForwardingContrib),
+	// FlowLeap Patent IDE: Removed GitHub telemetry forwarding
+	// asContributionFactory(GithubTelemetryForwardingContrib),
 	contextContribution,
 ];
 

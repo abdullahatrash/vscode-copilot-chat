@@ -72,6 +72,18 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 			return;
 		}
 
+		// Skip copilot vendor registration in Patent AI mode
+		// FlowLeap provider handles language models instead
+		if (this._isPatentAIMode()) {
+			this._logService.info('[LanguageModelAccess] Patent AI mode detected - skipping copilot vendor registration');
+			this._logService.info('[LanguageModelAccess] FlowLeap provider will handle all language model requests');
+			// Still register embeddings for local vector search
+			this.activationBlocker = Promise.all([
+				this._registerEmbeddings(),
+			]).then(() => { });
+			return;
+		}
+
 		// initial
 		this.activationBlocker = Promise.all([
 			this._registerChatProvider(),
@@ -85,6 +97,14 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 
 	get currentModels(): vscode.LanguageModelChatInformation[] {
 		return this._currentModels;
+	}
+
+	/**
+	 * Check if Patent AI mode is enabled
+	 * In Patent AI mode, we skip copilot vendor registration and use FlowLeap provider instead
+	 */
+	private _isPatentAIMode(): boolean {
+		return process.env.PATENT_AI_MODE === 'true';
 	}
 
 	private async _registerChatProvider(): Promise<void> {

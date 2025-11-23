@@ -8,8 +8,9 @@ import { IAuthenticationChatUpgradeService } from '../../../platform/authenticat
 import { AuthenticationChatUpgradeService } from '../../../platform/authentication/common/authenticationUpgradeService';
 import { CopilotTokenStore, ICopilotTokenStore } from '../../../platform/authentication/common/copilotTokenStore';
 import { BlockedExtensionService, IBlockedExtensionService } from '../../../platform/chat/common/blockedExtensionService';
-import { IChatQuotaService } from '../../../platform/chat/common/chatQuotaService';
-import { ChatQuotaService } from '../../../platform/chat/common/chatQuotaServiceImpl';
+// FlowLeap Patent IDE: Removed quota management (not needed for patent work)
+// import { IChatQuotaService } from '../../../platform/chat/common/chatQuotaService';
+// import { ChatQuotaService } from '../../../platform/chat/common/chatQuotaServiceImpl';
 import { IChatSessionService } from '../../../platform/chat/common/chatSessionService';
 import { IConversationOptions } from '../../../platform/chat/common/conversationOptions';
 import { IInteractionService, InteractionService } from '../../../platform/chat/common/interactionService';
@@ -140,7 +141,8 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 	builder.define(IChatSessionService, new SyncDescriptor(ChatSessionService));
 	builder.define(IConfigurationService, new SyncDescriptor(ConfigurationServiceImpl));
 	builder.define(ILogService, new SyncDescriptor(LogServiceImpl, [[new NewOutputChannelLogTarget(extensionContext)]]));
-	builder.define(IChatQuotaService, new SyncDescriptor(ChatQuotaService));
+	// FlowLeap Patent IDE: Removed quota management (not needed for patent work)
+	// builder.define(IChatQuotaService, new SyncDescriptor(ChatQuotaService));
 	builder.define(ITasksService, new SyncDescriptor(TasksService));
 	builder.define(IGitExtensionService, new SyncDescriptor(GitExtensionServiceImpl));
 	builder.define(IGitService, new SyncDescriptor(GitServiceImpl));

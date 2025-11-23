@@ -38,15 +38,23 @@ export class ChatAgentService implements IChatAgentService {
 	}
 
 	register(): IDisposable {
-		const chatAgents = this.instantiationService.createInstance(ChatAgents);
-		chatAgents.register();
-		this._lastChatAgents = chatAgents;
-		return {
-			dispose: () => {
-				chatAgents.dispose();
-				this._lastChatAgents = undefined;
-			}
-		};
+		console.log('[ChatAgentService] register() called - creating ChatAgents instance');
+		try {
+			const chatAgents = this.instantiationService.createInstance(ChatAgents);
+			console.log('[ChatAgentService] ChatAgents instance created, calling register()');
+			chatAgents.register();
+			console.log('[ChatAgentService] ChatAgents.register() completed successfully');
+			this._lastChatAgents = chatAgents;
+			return {
+				dispose: () => {
+					chatAgents.dispose();
+					this._lastChatAgents = undefined;
+				}
+			};
+		} catch (error) {
+			console.error('[ChatAgentService] ERROR during registration:', error);
+			throw error;
+		}
 	}
 }
 
@@ -73,8 +81,11 @@ class ChatAgents implements IDisposable {
 	}
 
 	register(): void {
+		console.log('[ChatAgents] register() called - starting agent registration');
 		this.additionalWelcomeMessage = this.instantiationService.invokeFunction(getAdditionalWelcomeMessage);
+		console.log('[ChatAgents] Registering default agent');
 		this._disposables.add(this.registerDefaultAgent());
+		console.log('[ChatAgents] Registering editing agent');
 		this._disposables.add(this.registerEditingAgent());
 		this._disposables.add(this.registerEditingAgent2());
 		this._disposables.add(this.registerEditingAgentEditor());
@@ -86,12 +97,15 @@ class ChatAgents implements IDisposable {
 		this._disposables.add(this.registerVSCodeAgent());
 		this._disposables.add(this.registerTerminalAgent());
 		this._disposables.add(this.registerTerminalPanelAgent());
+		console.log('[ChatAgents] All agents registered successfully');
 	}
 
 	private createAgent(name: string, defaultIntentIdOrGetter: IntentOrGetter, options?: { id?: string }): vscode.ChatParticipant {
 		const id = options?.id || getChatParticipantIdFromName(name);
+		console.log(`[ChatAgents] Creating agent: name="${name}", id="${id}"`);
 		const onRequestPaused = new Relay<vscode.ChatParticipantPauseStateEvent>();
 		const agent = vscode.chat.createChatParticipant(id, this.getChatParticipantHandler(id, name, defaultIntentIdOrGetter, onRequestPaused.event));
+		console.log(`[ChatAgents] Agent created successfully: id="${id}"`);
 		agent.onDidReceiveFeedback(e => {
 			this.userFeedbackService.handleFeedback(e, id);
 		});

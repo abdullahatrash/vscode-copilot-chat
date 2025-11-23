@@ -1,0 +1,11 @@
+{
+	"name": "@vscode/copilot-chat-lib",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Internal chat library module",
+	"main": "chatLibMain.ts",
+	"engines": {
+		"vscode": "^1.107.0"
+	}
+}
+

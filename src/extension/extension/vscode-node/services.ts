@@ -10,8 +10,12 @@ import { StaticGitHubAuthenticationService } from '../../../platform/authenticat
 import { createStaticGitHubTokenProvider, getOrCreateTestingCopilotTokenManager } from '../../../platform/authentication/node/copilotTokenManager';
 import { AuthenticationService } from '../../../platform/authentication/vscode-node/authenticationService';
 import { VSCodeCopilotTokenManager } from '../../../platform/authentication/vscode-node/copilotTokenManager';
+import { PatentAuthenticationService } from '../../byok/node/patentAuthenticationService';
+import { PatentEndpointProvider } from '../../byok/vscode-node/patentEndpointProvider';
 import { IChatAgentService } from '../../../platform/chat/common/chatAgents';
 import { IChatMLFetcher } from '../../../platform/chat/common/chatMLFetcher';
+import { IChatQuotaService } from '../../../platform/chat/common/chatQuotaService';
+import { ChatQuotaService } from '../../../platform/chat/common/chatQuotaServiceImpl';
 import { IChunkingEndpointClient } from '../../../platform/chunking/common/chunkingEndpointClient';
 import { ChunkingEndpointClientImpl } from '../../../platform/chunking/common/chunkingEndpointClientImpl';
 import { INaiveChunkingService, NaiveChunkingService } from '../../../platform/chunking/node/naiveChunkerService';
@@ -57,9 +61,10 @@ import { ISettingsEditorSearchService } from '../../../platform/settingsEditor/c
 import { IExperimentationService, NullExperimentationService } from '../../../platform/telemetry/common/nullExperimentationService';
 import { NullTelemetryService } from '../../../platform/telemetry/common/nullTelemetryService';
 import { ITelemetryService, ITelemetryUserConfig, TelemetryUserConfigImpl } from '../../../platform/telemetry/common/telemetry';
-import { APP_INSIGHTS_KEY_ENHANCED, APP_INSIGHTS_KEY_STANDARD } from '../../../platform/telemetry/node/azureInsights';
-import { MicrosoftExperimentationService } from '../../../platform/telemetry/vscode-node/microsoftExperimentationService';
-import { TelemetryService } from '../../../platform/telemetry/vscode-node/telemetryServiceImpl';
+// FlowLeap Patent IDE: Removed telemetry implementations - using null services only
+// import { APP_INSIGHTS_KEY_ENHANCED, APP_INSIGHTS_KEY_STANDARD } from '../../../platform/telemetry/node/azureInsights';
+// import { MicrosoftExperimentationService } from '../../../platform/telemetry/vscode-node/microsoftExperimentationService';
+// import { TelemetryService } from '../../../platform/telemetry/vscode-node/telemetryServiceImpl';
 import { IWorkspaceMutationManager } from '../../../platform/testing/common/workspaceMutationManager';
 import { ISetupTestsDetector, SetupTestsDetector } from '../../../platform/testing/node/setupTestDetector';
 import { ITestDepsResolver, TestDepsResolver } from '../../../platform/testing/node/testDepsResolver';
@@ -151,11 +156,33 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 		builder.define(ICopilotTokenManager, new SyncDescriptor(VSCodeCopilotTokenManager));
 	}
 
-	if (isScenarioAutomation) {
+	// Check if Patent AI mode is enabled
+	const isPatentMode = process.env.PATENT_AI_MODE === 'true' ||
+		extensionContext.globalState.get<boolean>('patent.enabled', false);
+
+	console.log('[Patent AI Services] Checking Patent AI mode:', {
+		envVar: process.env.PATENT_AI_MODE,
+		globalState: extensionContext.globalState.get<boolean>('patent.enabled', false),
+		isPatentMode
+	});
+
+	if (isPatentMode) {
+		console.log('[Patent AI Services] ✅ Patent AI mode ENABLED - registering PatentAuthenticationService and PatentEndpointProvider');
+		// Patent AI mode - use mock authentication and custom backend
+		builder.define(IAuthenticationService, new SyncDescriptor(PatentAuthenticationService));
+		builder.define(IEndpointProvider, new SyncDescriptor(PatentEndpointProvider, [collectFetcherTelemetry]));
+		builder.define(IIgnoreService, new SyncDescriptor(VsCodeIgnoreService));
+		// Note: logService not available here, will log in PatentAuthenticationService
+	} else if (isScenarioAutomation) {
+		console.log('[Patent AI Services] Using scenario automation mode');
+
+		// Scenario automation mode
 		builder.define(IAuthenticationService, new SyncDescriptor(StaticGitHubAuthenticationService, [createStaticGitHubTokenProvider()]));
 		builder.define(IEndpointProvider, new SyncDescriptor(ScenarioAutomationEndpointProviderImpl, [collectFetcherTelemetry]));
 		builder.define(IIgnoreService, new SyncDescriptor(NullIgnoreService));
 	} else {
+		console.log('[Patent AI Services] Using standard GitHub Copilot authentication');
+		// Standard GitHub Copilot authentication
 		builder.define(IAuthenticationService, new SyncDescriptor(AuthenticationService));
 		builder.define(IEndpointProvider, new SyncDescriptor(ProductionEndpointProvider, [collectFetcherTelemetry]));
 		builder.define(IIgnoreService, new SyncDescriptor(VsCodeIgnoreService));
@@ -179,6 +206,7 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 	builder.define(IGithubRepositoryService, new SyncDescriptor(GithubRepositoryService));
 	builder.define(IDevContainerConfigurationService, new SyncDescriptor(DevContainerConfigurationServiceImpl));
 	builder.define(IChatAgentService, new SyncDescriptor(ChatAgentService));
+	builder.define(IChatQuotaService, new SyncDescriptor(ChatQuotaService));
 	builder.define(ILinkifyService, new SyncDescriptor(LinkifyService));
 	builder.define(IChatMLFetcher, new SyncDescriptor(ChatMLFetcherImpl));
 	builder.define(IFeedbackReporter, new SyncDescriptor(FeedbackReporter));
@@ -207,29 +235,12 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 }
 
 function setupMSFTExperimentationService(builder: IInstantiationServiceBuilder, extensionContext: ExtensionContext) {
-	if (ExtensionMode.Production === extensionContext.extensionMode && !isScenarioAutomation) {
-		// Intitiate the experimentation service
-		builder.define(IExperimentationService, new SyncDescriptor(MicrosoftExperimentationService));
-	} else {
-		builder.define(IExperimentationService, new NullExperimentationService());
-	}
+	// FlowLeap Patent IDE: Always use null experimentation service (no A/B testing)
+	builder.define(IExperimentationService, new NullExperimentationService());
 }
 
 function setupTelemetry(builder: IInstantiationServiceBuilder, extensionContext: ExtensionContext, internalAIKey: string, internalLargeEventAIKey: string, externalAIKey: string) {
-
-	if (ExtensionMode.Production === extensionContext.extensionMode && !isScenarioAutomation) {
-		builder.define(ITelemetryService, new SyncDescriptor(TelemetryService, [
-			extensionContext.extension.packageJSON.name,
-			internalAIKey,
-			internalLargeEventAIKey,
-			externalAIKey,
-			APP_INSIGHTS_KEY_STANDARD,
-			APP_INSIGHTS_KEY_ENHANCED,
-		]));
-	} else {
-		// If we're developing or testing we don't want telemetry to be sent, so we turn it off
-		builder.define(ITelemetryService, new NullTelemetryService());
-	}
-
+	// FlowLeap Patent IDE: Always use null telemetry service (patent work is confidential)
+	builder.define(ITelemetryService, new NullTelemetryService());
 	setupMSFTExperimentationService(builder, extensionContext);
 }

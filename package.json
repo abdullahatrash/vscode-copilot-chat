@@ -1633,6 +1633,15 @@
 				"locations": [
 					"panel"
 				]
+			},
+			{
+				"id": "claude-code",
+				"name": "claude-code",
+				"fullName": "Claude Code Sessions",
+				"description": "Chat sessions powered by Claude Code SDK",
+				"locations": [
+					"panel"
+				]
 			}
 		],
 		"languageModelChatProviders": [
@@ -1683,6 +1692,11 @@
 				"vendor": "customoai",
 				"when": "productQualityType != 'stable'",
 				"displayName": "OpenAI Compatible",
+				"managementCommand": "github.copilot.chat.manageBYOK"
+			},
+			{
+				"vendor": "flowleap",
+				"displayName": "FlowLeap Patent AI",
 				"managementCommand": "github.copilot.chat.manageBYOK"
 			}
 		],
