@@ -54,7 +54,7 @@ export class PatentAnalysisTool implements vscode.LanguageModelTool<PatentAnalys
 			return new vscode.LanguageModelToolResult([
 				new vscode.LanguageModelTextPart(resultText)
 			]);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			const errorText = JSON.stringify({
 				error: `Patent analysis failed: ${error?.message || 'Unknown error'}`,
 				patent_number: input.patent_number

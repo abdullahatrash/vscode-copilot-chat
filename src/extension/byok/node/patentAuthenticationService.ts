@@ -179,7 +179,7 @@ export class PatentAuthenticationService implements IAuthenticationService {
 			copilotignore_enabled: false,            // Not using .copilotignore files
 			code_quote_enabled: false,               // No code citation tracking
 			public_suggestions: 'enabled',           // Allow code suggestions
-			telemetry: 'disabled' as any,            // No telemetry to GitHub (type workaround)
+			telemetry: 'disabled' as unknown,            // No telemetry to GitHub (type workaround)
 
 			// ✅ QUOTAS - UNLIMITED
 			// undefined means no quota restrictions

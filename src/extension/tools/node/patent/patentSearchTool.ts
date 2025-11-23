@@ -55,7 +55,7 @@ export class PatentSearchTool implements vscode.LanguageModelTool<PatentSearchIn
 				throw new Error(`Patent search failed: ${response.statusText}`);
 			}
 
-			const results = await response.json() as { patents?: any[]; count?: number };
+			const results = await response.json() as { patents?: unknown[]; count?: number };
 
 			const resultText = JSON.stringify({
 				results: results.patents || [],
@@ -67,7 +67,7 @@ export class PatentSearchTool implements vscode.LanguageModelTool<PatentSearchIn
 			return new vscode.LanguageModelToolResult([
 				new vscode.LanguageModelTextPart(resultText)
 			]);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			const errorText = JSON.stringify({
 				error: `Patent search failed: ${error?.message || 'Unknown error'}`,
 				results: [],

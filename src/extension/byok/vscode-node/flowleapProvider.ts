@@ -60,11 +60,11 @@ export class FlowLeapProvider extends BaseOpenAICompatibleLMProvider {
 	}
 
 	// Override to add logging
-	async provideLanguageModelChatInformation(options: { silent: boolean }, token: any): Promise<any[]> {
+	async provideLanguageModelChatInformation(options: { silent: boolean }, token: unknown): Promise<unknown[]> {
 		console.log('[FlowLeap] provideLanguageModelChatInformation() called, silent:', options.silent);
 		const models = await super.provideLanguageModelChatInformation(options, token);
 		console.log('[FlowLeap] Returning', models.length, 'models');
-		models.forEach((m: any) => {
+		models.forEach((m: unknown) => {
 			console.log('[FlowLeap] Model:', JSON.stringify({
 				id: m.id,
 				name: m.name,

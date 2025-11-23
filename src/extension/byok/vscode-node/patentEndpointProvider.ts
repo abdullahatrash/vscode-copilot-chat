@@ -36,7 +36,7 @@ export class PatentEndpointProvider implements IEndpointProvider {
 	private readonly _patentApiUrl: string;
 
 	constructor(
-		_collectFetcherTelemetry: any,
+		_collectFetcherTelemetry: unknown,
 		@ICAPIClientService _capiClientService: ICAPIClientService,
 		@IFetcherService _fetcher: IFetcherService,
 		@IExperimentationService _expService: IExperimentationService,
