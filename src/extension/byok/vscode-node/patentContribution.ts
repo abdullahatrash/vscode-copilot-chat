@@ -50,20 +50,8 @@ export class PatentContribution extends Disposable implements IExtensionContribu
 	 * Check if Patent AI mode is enabled via configuration or environment variable
 	 */
 	private isPatentModeEnabled(): boolean {
-		// Check environment variable first
-		if (process.env.PATENT_AI_MODE === 'true') {
-			return true;
-		}
-
-		// Check configuration setting via VSCode API
-		try {
-			const vscode = require('vscode');
-			const config = vscode.workspace.getConfiguration();
-			const configValue = config.get('patent.enabled', false) as boolean;
-			return configValue;
-		} catch {
-			return false;
-		}
+		const { isPatentAIMode } = require('../common/patentMode');
+		return isPatentAIMode();
 	}
 
 	/**

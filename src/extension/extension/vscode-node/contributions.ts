@@ -51,7 +51,8 @@ import { InlineCompletionContribution } from '../../typescriptContext/vscode-nod
 import * as workspaceChunkSearchContribution from '../../workspaceChunkSearch/node/workspaceChunkSearch.contribution';
 import * as workspaceIndexingContribution from '../../workspaceChunkSearch/vscode-node/workspaceChunkSearch.contribution';
 import { WorkspaceRecorderFeature } from '../../workspaceRecorder/vscode-node/workspaceRecorderFeature';
-import { FlowLeapContribution } from '../../byok/vscode-node/flowleapContribution';
+// FlowLeapContribution disabled - VS Code doesn't allow custom vendor names
+// import { FlowLeapContribution } from '../../byok/vscode-node/flowleapContribution';
 import { PatentContribution } from '../../byok/vscode-node/patentContribution';
 import vscodeContributions from '../vscode/contributions';
 

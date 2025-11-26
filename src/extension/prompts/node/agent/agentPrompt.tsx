@@ -30,7 +30,7 @@ import { InternalToolReference } from '../../../prompt/common/intents';
 import { IPromptVariablesService } from '../../../prompt/node/promptVariablesService';
 import { ToolName } from '../../../tools/common/toolNames';
 import { TodoListContextPrompt } from '../../../tools/node/todoListContextPrompt';
-import { CopilotIdentityRules, GPT5CopilotIdentityRule } from '../base/copilotIdentity';
+import { CopilotIdentityRules, GPT5CopilotIdentityRule, PatentAIIdentityRules, GPT5PatentAIIdentityRule } from '../base/copilotIdentity';
 import { IPromptEndpoint, renderPromptElement } from '../base/promptRenderer';
 import { Gpt5SafetyRule, SafetyRules } from '../base/safetyRules';
 import { Tag } from '../base/tag';
@@ -84,21 +84,31 @@ export class AgentPrompt extends PromptElement<AgentPromptProps> {
 		super(props);
 	}
 
+	private _isPatentAIMode(): boolean {
+		const { isPatentAIMode } = require('../../../byok/common/patentMode');
+		return isPatentAIMode();
+	}
+
 	async render(state: void, sizing: PromptSizing) {
 		const instructions = await this.getInstructions();
+		const isPatentAIMode = this._isPatentAIMode();
 
 		const omitBaseAgentInstructions = this.configurationService.getConfig(ConfigKey.AdvancedExperimental.OmitBaseAgentInstructions);
 		const baseAgentInstructions = <>
 			<SystemMessage>
-				You are an expert AI programming assistant, working with a user in the VS Code editor.<br />
+				{isPatentAIMode ? (
+					<>You are Patent AI, an expert patent examination assistant specialized in prior art search, patent claim analysis, and novelty assessment.<br /></>
+				) : (
+					<>You are an expert AI programming assistant, working with a user in the VS Code editor.<br /></>
+				)}
 				{isGpt5PlusFamily(this.props.endpoint.family) ? (
 					<>
-						<GPT5CopilotIdentityRule />
+						{isPatentAIMode ? <GPT5PatentAIIdentityRule /> : <GPT5CopilotIdentityRule />}
 						<Gpt5SafetyRule />
 					</>
 				) : (
 					<>
-						<CopilotIdentityRules />
+						{isPatentAIMode ? <PatentAIIdentityRules /> : <CopilotIdentityRules />}
 						<SafetyRules />
 					</>
 				)}

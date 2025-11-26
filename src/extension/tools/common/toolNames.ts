@@ -68,7 +68,10 @@ export enum ToolName {
 	EditFilesPlaceholder = 'edit_files',
 	CoreRunSubagent = 'runSubagent',
 	CoreConfirmationTool = 'vscode_get_confirmation',
-	CoreTerminalConfirmationTool = 'vscode_get_terminal_confirmation'
+	CoreTerminalConfirmationTool = 'vscode_get_terminal_confirmation',
+	SearchPatents = 'search_patents',
+	WritePatentResults = 'write_patent_results',
+	BuildPatentQuery = 'build_patent_query'
 }
 
 export enum ContributedToolName {
@@ -112,6 +115,9 @@ export enum ContributedToolName {
 	RunVscodeCmd = 'copilot_runVscodeCommand',
 	ToolReplay = 'copilot_toolReplay',
 	EditFilesPlaceholder = 'copilot_editFiles',
+	SearchPatents = 'copilot_searchPatents',
+	WritePatentResults = 'copilot_writePatentResults',
+	BuildPatentQuery = 'copilot_buildPatentQuery',
 }
 
 export const byokEditToolNamesToToolNames = {
@@ -175,6 +181,7 @@ export const toolCategories: Record<ToolName, ToolCategory> = {
 	[ToolName.ReadProjectStructure]: ToolCategory.Core,
 	[ToolName.CoreRunSubagent]: ToolCategory.Core,
 	[ToolName.Memory]: ToolCategory.Core,
+	[ToolName.WritePatentResults]: ToolCategory.Core,
 
 	// already enabled only when tasks are enabled
 	[ToolName.CoreRunTask]: ToolCategory.Core,
@@ -194,6 +201,8 @@ export const toolCategories: Record<ToolName, ToolCategory> = {
 	[ToolName.FetchWebPage]: ToolCategory.WebInteraction,
 	[ToolName.SimpleBrowser]: ToolCategory.WebInteraction,
 	[ToolName.GithubRepo]: ToolCategory.WebInteraction,
+	[ToolName.SearchPatents]: ToolCategory.WebInteraction,
+	[ToolName.BuildPatentQuery]: ToolCategory.WebInteraction,
 
 	// VS Code Interaction
 	[ToolName.SearchWorkspaceSymbols]: ToolCategory.VSCodeInteraction,

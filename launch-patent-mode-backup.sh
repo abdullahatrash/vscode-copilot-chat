@@ -14,15 +14,22 @@ export PATENT_AI_MODE=true
 export PATENT_API_URL="http://localhost:8000/v1/chat/completions"
 export PATENT_API_KEY="test-api-key"  # Your backend API key
 
+# EPO OPS API credentials (for patent search tool)
+# Get your credentials from: https://developers.epo.org/
+export EPO_CLIENT_ID="XuNNhsKUYvRMGxwK8yIFuCi2Xlfh9pLF6GgrWalBnZ5J1HfL"
+export EPO_CLIENT_SECRET="FXJx7hcJJTSMu5bl0WACgHEsPYGZOJhktMHTr4ZbEzROGzxA00MMrHACoAST8Av7"
+
+
 echo "✓ Patent AI Mode: ENABLED"
 echo "✓ Backend URL: $PATENT_API_URL"
 echo "✓ API Key: ${PATENT_API_KEY:0:8}..."
+echo "✓ EPO Client ID: ${EPO_CLIENT_ID:0:8}..."
+echo "✓ EPO Secret: ${EPO_CLIENT_SECRET:0:8}..."
 echo ""
 echo "📝 Make sure your backend is running:"
 echo "   cd /Users/neoak/projects/patnet-ai-backend"
 echo "   npm run dev"
 echo ""
-echo "🔍 Patent search is handled by the backend (EPO credentials in backend .env)"
 echo "========================================="
 
 # Launch VS Code with the extension

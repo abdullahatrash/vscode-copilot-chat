@@ -13,6 +13,7 @@ import { IFileSystemService } from '../../../../platform/filesystem/common/fileS
 import { inferAlternativeNotebookContentFormat } from '../../../../platform/notebook/common/alternativeContent';
 import { IAlternativeNotebookContentEditGenerator, NotebookEditGenrationSource } from '../../../../platform/notebook/common/alternativeContentEditGenerator';
 import { INotebookService } from '../../../../platform/notebook/common/notebookService';
+import { ILogService } from '../../../../platform/log/common/logService';
 import { ITelemetryService } from '../../../../platform/telemetry/common/telemetry';
 import { IWorkspaceService } from '../../../../platform/workspace/common/workspaceService';
 import { findNotebook } from '../../../../util/common/notebooks';
@@ -27,6 +28,7 @@ import { OutcomeAnnotation } from '../../../inlineChat/node/promptCraftingTypes'
 import { IWorkingSet } from '../../../prompt/common/intents';
 import { EXISTING_CODE_MARKER } from '../panel/codeBlockFormattingRules';
 import { CodeMapper, CodeMapperOutcomeTelemetry, ICodeMapperDocument, ICodeMapperRequestInput, processFullRewriteNewNotebook } from './codeMapper';
+import { PatentAICodeMapper } from './patentAICodeMapper';
 
 export type CodeBlock = { readonly code: string; readonly resource: vscode.Uri; readonly markdownBeforeBlock?: string };
 export type ResourceTextEdits = { readonly target: vscode.Uri; readonly edits: TextEdit | TextEdit[] };
@@ -67,6 +69,7 @@ export class CodeMapperService extends Disposable implements ICodeMapperService 
 	constructor(
 		@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@INotebookService private readonly notebookService: INotebookService,
+		@ILogService private readonly logService: ILogService,
 	) {
 		super();
 		this._register(toDisposable(() => this._queues.clear()));
@@ -83,6 +86,28 @@ export class CodeMapperService extends Disposable implements ICodeMapperService 
 	}
 
 	private async _doMapCode(request: IMapCodeRequest, responseStream: vscode.MappedEditsResponseStream, telemetryInfo: ICodeMapperTelemetryInfo | undefined, token: vscode.CancellationToken): Promise<IMapCodeResult | undefined> {
+		// Check if we're in Patent AI mode
+		const { isPatentAIMode: checkPatentMode } = require('../../../byok/common/patentMode');
+		const isPatentAIMode = checkPatentMode();
+
+		if (isPatentAIMode) {
+			this.logService.info('[Patent AI] Using Patent AI Code Mapper');
+			const patentAIMapper = new PatentAICodeMapper(this.logService);
+
+			// Convert IMapCodeRequest to ICodeMapperRequestInput format
+			const requestInput: ICodeMapperRequestInput = {
+				createNew: true,
+				codeBlock: request.codeBlock.code,
+				markdownBeforeBlock: request.codeBlock.markdownBeforeBlock,
+				existingDocument: undefined,
+				uri: request.codeBlock.resource,
+				workingSet: request.workingSet?.map(entry => entry.document) ?? [],
+			};
+
+			return patentAIMapper.mapCode(requestInput, responseStream, token);
+		}
+
+		// Use original GitHub Copilot code mapper
 		const codeMapper = this.notebookService.hasSupportedNotebooks(request.codeBlock.resource) ?
 			this.instantiationService.createInstance(NotebookCodeMapper) :
 			this.instantiationService.createInstance(DocumentCodeMapper);

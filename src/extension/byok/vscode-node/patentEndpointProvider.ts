@@ -76,6 +76,7 @@ export class PatentEndpointProvider implements IEndpointProvider {
 
 	/**
 	 * Get Patent AI API URL from environment or config
+	 * Can be either base URL (http://localhost:8000) or full URL (http://localhost:8000/v1/chat/completions)
 	 */
 	private getPatentApiUrl(): string {
 		if (process.env.PATENT_API_URL) {
@@ -138,13 +139,18 @@ export class PatentEndpointProvider implements IEndpointProvider {
 	private getOrCreatePatentChatEndpoint(): IChatEndpoint {
 		if (!this._chatEndpoint) {
 			const modelMetadata = this.getPatentModelMetadata();
+			// Append /v1/chat/completions to base URL if not already present
+			let chatUrl = this._patentApiUrl;
+			if (!chatUrl.endsWith('/v1/chat/completions')) {
+				chatUrl = `${chatUrl}/v1/chat/completions`;
+			}
 			this._chatEndpoint = this._instantiationService.createInstance(
 				PatentChatEndpoint,
 				modelMetadata,
 				this._patentApiKey,
-				this._patentApiUrl
+				chatUrl
 			);
-			this._logService.info('[Patent AI] Chat endpoint created');
+			this._logService.info(`[Patent AI] Chat endpoint created with URL: ${chatUrl}`);
 		}
 		return this._chatEndpoint;
 	}

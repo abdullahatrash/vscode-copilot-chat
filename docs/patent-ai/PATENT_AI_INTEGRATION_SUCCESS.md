@@ -821,6 +821,134 @@ src
 
 ---
 
+## Known Issues
+
+### Issue 1: LLM Tool Selection - Web Search Over Patent Search
+
+**Problem:**
+When asking patent-specific queries like "Search for Microsoft patents in class G06N", the LLM incorrectly chooses the `copilot_fetchWebPage` tool instead of the `search_patents` tool.
+
+**Observed Behavior:**
+```
+User Query: "Search for Microsoft patents in class G06N"
+Expected: LLM uses search_patents tool with CQL query
+Actual: LLM uses copilot_fetchWebPage tool with URL https://patents.google.com/
+```
+
+**Impact:**
+- Patent search functionality not being used
+- Falls back to web search which then fails (see Issue 2)
+- User must explicitly specify "use the search_patents tool" to get correct behavior
+
+**Root Cause:**
+System prompt still has GitHub Copilot identity instead of Patent AI agent identity. The LLM doesn't understand it should prefer patent-specific tools over generic web search.
+
+**Future Fix:**
+1. Update system prompt to Patent AI agent identity
+2. Add tool priority hints to prefer patent tools
+3. Potentially adjust tool descriptions to be more specific
+4. Consider removing or disabling web search tool in Patent AI mode
+
+**Location:**
+Extension system prompt configuration (needs investigation to locate exact file)
+
+---
+
+### Issue 2: Web Search Tool Embeddings Error
+
+**Problem:**
+The `copilot_fetchWebPage` tool fails with "No embedding types available" error.
+
+**Error Log:**
+```
+ERR [LanguageModelToolsService#invokeTool] Error from tool copilot_fetchWebPage
+with parameters {"urls":["https://patents.google.com/"],"query":"Microsoft patents in class G06N"}:
+No embedding types available: Error: No embedding types available
+    at UrlChunkEmbeddingsIndex.findInUrls (/Users/neoak/projects/vscode-copilot-chat/src/platform/urlChunkSearch/node/urlChunkEmbeddingsIndex.ts:67:10)
+    at FetchWebPageTool.invoke (/Users/neoak/projects/vscode-copilot-chat/src/extension/tools/vscode-node/fetchWebPageTool.tsx:110:31)
+```
+
+**Root Cause:**
+The `UrlChunkEmbeddingsIndex` service requires an embedding provider to be configured. The web search tool fetches web pages and uses embeddings to extract relevant chunks matching the query, but no embedding service is registered in Patent AI mode.
+
+**Impact:**
+- Web search tool completely broken
+- Related to Issue 1 - even if LLM chooses web search, it fails
+- Not critical for patent workflows since patent search tool should be used instead
+
+**Future Fix:**
+Two options:
+1. **Configure embeddings:** Register an embedding provider (OpenAI embeddings or local model)
+2. **Disable web search:** Remove `copilot_fetchWebPage` tool from available tools in Patent AI mode
+
+**Files Involved:**
+- `/Users/neoak/projects/vscode-copilot-chat/src/platform/urlChunkSearch/node/urlChunkEmbeddingsIndex.ts:67` - Error location
+- `/Users/neoak/projects/vscode-copilot-chat/src/extension/tools/vscode-node/fetchWebPageTool.tsx:110` - Tool implementation
+- `/Users/neoak/projects/vscode-copilot-chat/src/extension/conversation/vscode-node/languageModelAccess.ts` - Embeddings registration
+
+**Recommended Fix:**
+Option 2 (disable web search) - Patent AI should use patent APIs, not generic web search. This aligns better with the specialized patent examination use case.
+
+---
+
+### Issue 3: System Prompt Identity
+
+**Problem:**
+System prompt retains GitHub Copilot identity and instructions rather than Patent AI agent identity.
+
+**Current Behavior:**
+- LLM thinks it's GitHub Copilot
+- Instructions reference GitHub-specific workflows
+- No patent examination context
+
+**Desired Behavior:**
+- LLM identifies as Patent AI agent
+- Instructions focus on patent analysis workflows
+- Understands patent-specific tools and CQL queries
+- Prioritizes patent tools over generic tools
+
+**Status:**
+✅ **FIXED** - November 23, 2025
+
+**Solution Implemented:**
+
+1. **Created Patent AI Identity Components** (`copilotIdentity.tsx`)
+   - Added `PatentAIIdentityRules` class for standard models
+   - Added `GPT5PatentAIIdentityRule` class for GPT-5 models
+   - Identity explicitly states "Patent AI" name
+   - Includes patent examination specialization context
+   - Instructs to prefer patent tools over web search
+
+2. **Updated System Message** (`agentPrompt.tsx`)
+   - Added `_isPatentAIMode()` detection method
+   - System message changes based on PATENT_AI_MODE environment variable:
+     - **Patent AI Mode:** "You are Patent AI, an expert patent examination assistant specialized in prior art search, patent claim analysis, and novelty assessment."
+     - **Normal Mode:** "You are an expert AI programming assistant, working with a user in the VS Code editor."
+   - Conditionally renders Patent AI or Copilot identity rules
+
+3. **Enhanced Agent Instructions** (`defaultAgentInstructions.tsx`)
+   - Added patent tool awareness in `DefaultAgentPrompt`
+   - Added patent tool awareness in `AlternateGPTPrompt`
+   - When Patent AI mode + search_patents tool available:
+     - "You have specialized patent analysis capabilities. When users ask about patents or patent searches, you MUST use the search_patents tool instead of web search tools. The search_patents tool uses CQL (Common Patent Query Language) to search the EPO OPS API."
+
+**Files Modified:**
+- `/Users/neoak/projects/vscode-copilot-chat/src/extension/prompts/node/base/copilotIdentity.tsx` (+40 lines)
+- `/Users/neoak/projects/vscode-copilot-chat/src/extension/prompts/node/agent/agentPrompt.tsx` (+13 lines)
+- `/Users/neoak/projects/vscode-copilot-chat/src/extension/prompts/node/agent/defaultAgentInstructions.tsx` (+6 lines)
+
+**Testing Required:**
+1. Restart VS Code with Patent AI mode enabled
+2. Ask: "Search for Microsoft patents in class G06N"
+3. Verify LLM uses `search_patents` tool instead of `copilot_fetchWebPage`
+4. Ask: "What's your name?"
+5. Verify response is "Patent AI" not "GitHub Copilot"
+
+**Priority:**
+High - This should fix Issues 1 and 2 (tool selection and web search errors)
+
+---
+
 ## Future Enhancements
 
 ### 1. Multi-Model Support (Backend)

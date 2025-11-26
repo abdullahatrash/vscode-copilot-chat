@@ -18,13 +18,13 @@ import { AzureBYOKModelProvider } from './azureProvider';
 import { BYOKStorageService, IBYOKStorageService } from './byokStorageService';
 import { CustomOAIModelConfigurator } from './customOAIModelConfigurator';
 import { CustomOAIBYOKModelProvider } from './customOAIProvider';
+import { FlowLeapProvider } from './flowleapProvider';
 import { GeminiNativeBYOKLMProvider } from './geminiNativeProvider';
 import { GroqBYOKLMProvider } from './groqProvider';
 import { OllamaLMProvider } from './ollamaProvider';
 import { OAIBYOKLMProvider } from './openAIProvider';
 import { OpenRouterLMProvider } from './openRouterProvider';
 import { XAIBYOKLMProvider } from './xAIProvider';
-import { FlowLeapProvider } from './flowleapProvider';
 
 export class BYOKContrib extends Disposable implements IExtensionContribution {
 	public readonly id: string = 'byok-contribution';
@@ -108,10 +108,10 @@ export class BYOKContrib extends Disposable implements IExtensionContribution {
 		// VS Code's language model service only resolves models on-demand, but we want FlowLeap
 		// models to be available immediately when the chat panel opens
 		console.log('[BYOKContrib] Triggering FlowLeap model resolution');
-		lm.selectChatModels({ vendor: FlowLeapProvider.providerName.toLowerCase() }).then(models => {
+		Promise.resolve(lm.selectChatModels({ vendor: FlowLeapProvider.providerName.toLowerCase() })).then(models => {
 			console.log('[BYOKContrib] FlowLeap models resolved:', models.length, 'models found');
 			models.forEach(m => console.log('[BYOKContrib] Available model:', m.name, '(' + m.id + ')'));
-		}).catch(err => {
+		}).catch((err: Error) => {
 			console.error('[BYOKContrib] Failed to resolve FlowLeap models:', err);
 		});
 	}

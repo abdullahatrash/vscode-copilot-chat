@@ -50,10 +50,15 @@ export interface DefaultAgentPromptProps extends BasePromptElementProps {
 export class DefaultAgentPrompt extends PromptElement<DefaultAgentPromptProps> {
 	async render(state: void, sizing: PromptSizing) {
 		const tools = detectToolCapabilities(this.props.availableTools);
+		const { isPatentAIMode: checkPatentMode } = require('../../../byok/common/patentMode');
+		const isPatentAIMode = checkPatentMode();
+		const hasBuildPatentQueryTool = !!this.props.availableTools?.find(tool => tool.name === 'build_patent_query');
+		const hasSearchPatentsTool = !!this.props.availableTools?.find(tool => tool.name === 'search_patents');
 
 		return <InstructionMessage>
 			<Tag name='instructions'>
 				You are a highly sophisticated automated coding agent with expert-level knowledge across many different programming languages and frameworks.<br />
+				{isPatentAIMode && hasBuildPatentQueryTool && hasSearchPatentsTool && <>You have specialized patent analysis capabilities. For patent searches, follow this workflow: (1) FIRST use build_patent_query to analyze the user's request and get an optimized CQL query with search strategy, (2) THEN use search_patents with the recommended CQL to execute the search, (3) Analyze results and refine if needed. This ensures effective searches with proper IPC classifications, applicant name handling, and keyword placement. Never construct CQL queries directly - always use build_patent_query first.<br /></>}
 				The user will ask a question, or ask you to perform a task, and it may require lots of research to answer correctly. There is a selection of tools that let you perform actions or retrieve helpful context to answer the user's question.<br />
 				<KeepGoingReminder modelFamily={this.props.modelFamily} />
 				You will be given some context and attachments along with the user prompt. You can use them if they are relevant to the task, and ignore them if not.{tools[ToolName.ReadFile] && <> Some attachments may be summarized with omitted sections like `/* Lines 123-456 omitted */`. You can use the {ToolName.ReadFile} tool to read more context if needed. Never pass this omitted line marker to an edit tool.</>}<br />
@@ -152,10 +157,15 @@ export class AlternateGPTPrompt extends PromptElement<DefaultAgentPromptProps> {
 	async render(state: void, sizing: PromptSizing) {
 		const tools = detectToolCapabilities(this.props.availableTools);
 		const isGpt5 = this.props.modelFamily?.startsWith('gpt-5') === true;
+		const { isPatentAIMode: checkPatentMode } = require('../../../byok/common/patentMode');
+		const isPatentAIMode = checkPatentMode();
+		const hasBuildPatentQueryTool = !!this.props.availableTools?.find(tool => tool.name === 'build_patent_query');
+		const hasSearchPatentsTool = !!this.props.availableTools?.find(tool => tool.name === 'search_patents');
 
 		return <InstructionMessage>
 			<Tag name='gptAgentInstructions'>
 				You are a highly sophisticated coding agent with expert-level knowledge across programming languages and frameworks.<br />
+				{isPatentAIMode && hasBuildPatentQueryTool && hasSearchPatentsTool && <>You have specialized patent analysis capabilities. For patent searches, follow this workflow: (1) FIRST use build_patent_query to analyze the user's request and get an optimized CQL query with search strategy, (2) THEN use search_patents with the recommended CQL to execute the search, (3) Analyze results and refine if needed. This ensures effective searches with proper IPC classifications, applicant name handling, and keyword placement. Never construct CQL queries directly - always use build_patent_query first.<br /></>}
 				<KeepGoingReminder modelFamily={this.props.modelFamily} />
 				You will be given some context and attachments along with the user prompt. You can use them if they are relevant to the task, and ignore them if not.{tools[ToolName.ReadFile] && <> Some attachments may be summarized. You can use the {ToolName.ReadFile} tool to read more context, but only do this if the attached file is incomplete.</>}<br />
 				If you can infer the project type (languages, frameworks, and libraries) from the user's query or the context that you have, make sure to keep them in mind when making changes.<br />

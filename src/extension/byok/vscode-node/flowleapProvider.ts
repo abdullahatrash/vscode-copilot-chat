@@ -2,6 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { CancellationToken, LanguageModelChatInformation } from 'vscode';
 import { ILogService } from '../../../platform/log/common/logService';
 import { IFetcherService } from '../../../platform/networking/common/fetcherService';
 import { IInstantiationService } from '../../../util/vs/platform/instantiation/common/instantiation';
@@ -60,18 +61,16 @@ export class FlowLeapProvider extends BaseOpenAICompatibleLMProvider {
 	}
 
 	// Override to add logging
-	async provideLanguageModelChatInformation(options: { silent: boolean }, token: unknown): Promise<unknown[]> {
+	override async provideLanguageModelChatInformation(options: { silent: boolean }, token: CancellationToken): Promise<LanguageModelChatInformation[]> {
 		console.log('[FlowLeap] provideLanguageModelChatInformation() called, silent:', options.silent);
 		const models = await super.provideLanguageModelChatInformation(options, token);
 		console.log('[FlowLeap] Returning', models.length, 'models');
-		models.forEach((m: unknown) => {
+		models.forEach((m: LanguageModelChatInformation) => {
 			console.log('[FlowLeap] Model:', JSON.stringify({
 				id: m.id,
 				name: m.name,
 				family: m.family,
-				vendor: m.vendor,
-				isUserSelectable: m.isUserSelectable,
-				isDefault: m.isDefault,
+				version: m.version,
 				maxInputTokens: m.maxInputTokens,
 				maxOutputTokens: m.maxOutputTokens
 			}, null, 2));

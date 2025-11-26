@@ -93,6 +93,14 @@ export const getAgentTools = (instaService: IInstantiationService, request: vsco
 		allowTools[ToolName.RunTests] = await testService.hasAnyTests();
 		allowTools[ToolName.CoreRunTask] = tasksService.getTasks().length > 0;
 
+		// Enable Patent AI tools when in Patent AI mode
+		const { isPatentAIMode } = require('../../byok/common/patentMode');
+		if (isPatentAIMode()) {
+			allowTools[ToolName.BuildPatentQuery] = true;
+			allowTools[ToolName.SearchPatents] = true;
+			allowTools[ToolName.WritePatentResults] = true;
+		}
+
 		if (model.family === 'gpt-5-codex' || model.family.includes('grok-code')) {
 			allowTools[ToolName.CoreManageTodoList] = false;
 		}

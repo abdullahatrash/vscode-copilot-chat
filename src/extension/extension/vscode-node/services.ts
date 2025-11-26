@@ -157,12 +157,11 @@ export function registerServices(builder: IInstantiationServiceBuilder, extensio
 	}
 
 	// Check if Patent AI mode is enabled
-	const isPatentMode = process.env.PATENT_AI_MODE === 'true' ||
-		extensionContext.globalState.get<boolean>('patent.enabled', false);
+	const { isPatentAIMode } = require('../../byok/common/patentMode');
+	const isPatentMode = isPatentAIMode();
 
 	console.log('[Patent AI Services] Checking Patent AI mode:', {
 		envVar: process.env.PATENT_AI_MODE,
-		globalState: extensionContext.globalState.get<boolean>('patent.enabled', false),
 		isPatentMode
 	});
 

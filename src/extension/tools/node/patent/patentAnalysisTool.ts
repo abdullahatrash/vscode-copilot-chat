@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import type * as vscode from 'vscode';
+import * as vscode from 'vscode';
+import { LanguageModelTextPart, LanguageModelToolResult } from '../../../../vscodeTypes';
 
 interface PatentAnalysisInput {
 	patent_number: string;
@@ -51,17 +52,18 @@ export class PatentAnalysisTool implements vscode.LanguageModelTool<PatentAnalys
 			const results = await response.json();
 			const resultText = JSON.stringify(results, null, 2);
 
-			return new vscode.LanguageModelToolResult([
-				new vscode.LanguageModelTextPart(resultText)
+			return new LanguageModelToolResult([
+				new LanguageModelTextPart(resultText)
 			]);
 		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 			const errorText = JSON.stringify({
-				error: `Patent analysis failed: ${error?.message || 'Unknown error'}`,
+				error: `Patent analysis failed: ${errorMessage}`,
 				patent_number: input.patent_number
 			}, null, 2);
 
-			return new vscode.LanguageModelToolResult([
-				new vscode.LanguageModelTextPart(errorText)
+			return new LanguageModelToolResult([
+				new LanguageModelTextPart(errorText)
 			]);
 		}
 	}

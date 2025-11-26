@@ -104,7 +104,8 @@ export class LanguageModelAccess extends Disposable implements IExtensionContrib
 	 * In Patent AI mode, we skip copilot vendor registration and use FlowLeap provider instead
 	 */
 	private _isPatentAIMode(): boolean {
-		return process.env.PATENT_AI_MODE === 'true';
+		const { isPatentAIMode } = require('../../byok/common/patentMode');
+		return isPatentAIMode();
 	}
 
 	private async _registerChatProvider(): Promise<void> {

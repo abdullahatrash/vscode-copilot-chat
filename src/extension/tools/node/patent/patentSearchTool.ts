@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import type * as vscode from 'vscode';
+import * as vscode from 'vscode';
+import { LanguageModelTextPart, LanguageModelToolResult } from '../../../../vscodeTypes';
 
 interface PatentSearchInput {
 	query: string;
@@ -64,18 +65,19 @@ export class PatentSearchTool implements vscode.LanguageModelTool<PatentSearchIn
 				database: input.database || 'all'
 			}, null, 2);
 
-			return new vscode.LanguageModelToolResult([
-				new vscode.LanguageModelTextPart(resultText)
+			return new LanguageModelToolResult([
+				new LanguageModelTextPart(resultText)
 			]);
 		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 			const errorText = JSON.stringify({
-				error: `Patent search failed: ${error?.message || 'Unknown error'}`,
+				error: `Patent search failed: ${errorMessage}`,
 				results: [],
 				count: 0
 			}, null, 2);
 
-			return new vscode.LanguageModelToolResult([
-				new vscode.LanguageModelTextPart(errorText)
+			return new LanguageModelToolResult([
+				new LanguageModelTextPart(errorText)
 			]);
 		}
 	}
